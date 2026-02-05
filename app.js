@@ -1,13 +1,13 @@
 // === Configuration ===
 const CONFIG = {
     FIREBASE_CONFIG: {
-            apiKey: "AIzaSyCO60FWOusczlcwS8aTXWPs_9QJTa1fBC4",
-            authDomain: "gym4-nutrition.firebaseapp.com",
-          databaseURL: "https://gym4-nutrition-default-rtdb.europe-west1.firebasedatabase.app",
-          projectId: "gym4-nutrition",
-          storageBucket: "gym4-nutrition.firebasestorage.app",
-          messagingSenderId: "836431470907",
-          appId: "1:836431470907:web:950d25ce704af4c2b0171e"
+        apiKey: "AIzaSyDCPuvnpFiXowDlicOPZ_obcgNCb_49654",
+        authDomain: "gym4-nutrition-test.firebaseapp.com",
+        databaseURL: "https://gym4-nutrition-test-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "gym4-nutrition-test",
+        storageBucket: "gym4-nutrition-test.firebasestorage.app",
+        messagingSenderId: "850496732022",
+        appId: "1:850496732022:web:3d3c50389564b4c1559857"
     },
     ADMIN_PIN: '1312',
     AUTO_REFRESH_INTERVAL: 60000, // 2 minutes
