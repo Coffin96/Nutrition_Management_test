@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Харчування - Гімназія №4</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <div class="header-container">
+                <div class="header-title" onclick="app.logout()">
+                    <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                        <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                    </svg>
+                    <div>
+                        <h1>ГІМНАЗІЯ №4</h1>
+                        <div class="subtitle">
+                            <p>NUTRITION SYSTEM</p>
+                            <div class="status" id="onlineStatus">
+                                <svg class="icon-xs" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/></svg>
+                                <span>CLOUD SYNC</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-actions" id="headerActions" style="display:none;">
+                    <span class="role-badge" id="roleBadge"></span>
+                    <button onclick="app.logout()" class="logout-btn">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+                        </svg>
+                        <span>Вихід</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-container" id="mainContent"></main>
+
+        <footer class="footer">
+            <div class="footer-container">
+                <div>&copy; 2025 Гімназія №4</div>
+                <button onclick="app.loadData()" class="refresh-btn">
+                    <svg class="icon-xs" id="refreshIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                    </svg>
+                    <span>Оновити дані</span>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script src="app.js"></script>
+</body>
+</html>
