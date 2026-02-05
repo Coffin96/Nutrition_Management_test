@@ -13,7 +13,6 @@ const CONFIG = {
     AUTO_REFRESH_INTERVAL: 60000, // 2 minutes
 };
 
-
 // === Initial Data ===
 const INITIAL_CLASSES = [
     { id: '1a', className: '1-А', shift: 1, teacherName: 'Мельник О.М.', pin: '1111' },
@@ -533,7 +532,7 @@ const login = {
 
 // === Teacher View ===
 const teacherView = {
-    formData: { total: 0, actual: 0, eating: 0, teacherEating: false },
+    formData: { total: 0, actual: 0, eating: 0, teacherEating: false, assistantEating: false },
     submitted: false,
     render() {
         const selectedClass = state.classes.find(c => c.id === state.authClassId);
@@ -543,7 +542,8 @@ const teacherView = {
         const existingReport = state.reports.find(r => r.classId === state.authClassId && r.date === todayISO);
         if (existingReport) {
             this.formData = { total: existingReport.totalStudents, actual: existingReport.actualStudents, 
-                eating: existingReport.eatingStudents, teacherEating: existingReport.teacherEating };
+                eating: existingReport.eatingStudents, teacherEating: existingReport.teacherEating,
+                assistantEating: existingReport.assistantEating || false };
         }
         return `<div class="teacher-container"><div class="report-card"><div class="report-header">
             <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9l2 2 4-4"></path></svg> Заявка: ${selectedClass.className}</h3>
@@ -556,12 +556,14 @@ const teacherView = {
             <div class="form-field eating"><label class="eating">Будуть їсти</label><input type="number" min="0" required value="${this.formData.eating || ''}" oninput="teacherView.updateField('eating', this.value)"></div>
             </div><div class="checkbox-field"><input type="checkbox" id="teacherEating" ${this.formData.teacherEating ? 'checked' : ''} onchange="teacherView.updateField('teacherEating', this.checked)">
             <label for="teacherEating">Я (класний керівник) також буду харчуватися</label></div>
+            <div class="checkbox-field"><input type="checkbox" id="assistantEating" ${this.formData.assistantEating ? 'checked' : ''} onchange="teacherView.updateField('assistantEating', this.checked)">
+            <label for="assistantEating">Харчується асистент вчителя</label></div>
             <button type="submit" class="submit-btn${this.submitted ? ' success' : ''}">
             ${this.submitted ? '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg><span>Оновлено!</span>' : '<span>Відправити заявку</span>'}
             </button></form>${existingReport ? `<div class="report-notice">Ви вже подали заявку сьогодні о ${new Date(existingReport.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}. Повторне відправлення оновить дані.</div>` : ''}</div></div>`;
     },
     updateField(field, value) {
-        if (field === 'teacherEating') this.formData[field] = value;
+        if (field === 'teacherEating' || field === 'assistantEating') this.formData[field] = value;
         else this.formData[field] = parseInt(value) || 0;
     },
     async handleSubmit(e) {
@@ -570,7 +572,8 @@ const teacherView = {
         if (!selectedClass) return;
         const report = { id: Math.random().toString(36).substr(2, 9), classId: selectedClass.id, date: app.getTodayISO(),
             totalStudents: this.formData.total, actualStudents: this.formData.actual, eatingStudents: this.formData.eating,
-            teacherEating: this.formData.teacherEating, teacherName: selectedClass.teacherName, timestamp: Date.now() };
+            teacherEating: this.formData.teacherEating, assistantEating: this.formData.assistantEating,
+            teacherName: selectedClass.teacherName, timestamp: Date.now() };
         state.reports = state.reports.filter(r => !(r.classId === report.classId && r.date === report.date));
         state.reports.push(report);
         await api.submitReport(report);
@@ -605,7 +608,7 @@ const canteenView = {
     renderGrid(reports) {
         return `<div class="class-grid no-print">${state.classes.filter(c => this.activeShift === 0 || c.shift === this.activeShift).sort((a,b) => a.className.localeCompare(b.className, 'uk')).map(c => {
             const report = reports.find(r => r.classId === c.id);
-            const eatingCount = (report?.eatingStudents || 0) + (report?.teacherEating ? 1 : 0);
+            const eatingCount = (report?.eatingStudents || 0) + (report?.teacherEating ? 1 : 0) + (report?.assistantEating ? 1 : 0);
             return `<div class="class-card ${report ? 'submitted' : 'pending'}"><div class="class-card-header"><h4>${c.className}</h4><span>${c.teacherName}</span></div>
             ${report ? `<div class="eating-count"><p>Харчуються</p><p class="count">${eatingCount}</p>${report.teacherEating ? '<p class="teacher-badge">+ Вчитель</p>' : ''}</div>
             <div class="class-card-footer"><div><svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> ${new Date(report.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
@@ -621,10 +624,10 @@ const canteenView = {
             <div class="table-wrapper"><table><thead><tr><th>Клас</th><th>Всього</th><th>Фактично</th><th>Харчуються</th><th>Підпис</th></tr></thead><tbody>
             ${state.classes.filter(c => this.activeShift === 0 || c.shift === this.activeShift).sort((a,b) => a.className.localeCompare(b.className, 'uk')).map(c => {
                 const r = currentReports.find(rep => rep.classId === c.id);
-                const eating = (r?.eatingStudents || 0) + (r?.teacherEating ? 1 : 0);
+                const eating = (r?.eatingStudents || 0) + (r?.teacherEating ? 1 : 0) + (r?.assistantEating ? 1 : 0);
                 return `<tr><td>${c.className}</td><td>${r?.totalStudents || ''}</td><td>${r?.actualStudents || ''}</td><td>${eating || ''}</td><td></td></tr>`;
             }).join('')}</tbody><tfoot><tr><td>Всього:</td><td>${currentReports.reduce((a,b) => a + b.totalStudents, 0)}</td><td>${currentReports.reduce((a,b) => a + b.actualStudents, 0)}</td>
-            <td>${currentReports.reduce((a,b) => a + b.eatingStudents + (b.teacherEating ? 1 : 0), 0)}</td><td></td></tr></tfoot></table></div>
+            <td>${currentReports.reduce((a,b) => a + b.eatingStudents + (b.teacherEating ? 1 : 0) + (b.assistantEating ? 1 : 0), 0)}</td><td></td></tr></tfoot></table></div>
             <div class="report-signature"><p>Адміністрація</p><p>Їдальня</p></div></div></div>`;
     },
     renderMonthlyTable(date, allReports) {
@@ -796,7 +799,7 @@ const canteenView = {
             });
             state.classes.filter(c => this.activeShift === 0 || c.shift === this.activeShift).sort((a,b) => a.className.localeCompare(b.className, 'uk')).forEach(c => {
                 const r = currentReports.find(rep => rep.classId === c.id);
-                const eating = (r?.eatingStudents || 0) + (r?.teacherEating ? 1 : 0);
+                const eating = (r?.eatingStudents || 0) + (r?.teacherEating ? 1 : 0) + (r?.assistantEating ? 1 : 0);
                 csv += `${c.className};${r?.totalStudents || 0};${r?.actualStudents || 0};${eating}\n`;
             });
         }
@@ -819,25 +822,23 @@ const adminView = {
     newClass: { id: '', className: '', teacherName: '', pin: '', shift: 1 }, editingId: null,
     render() {
         return `<div class="view-container"><div class="admin-tabs no-print">
-            ${['classes','reports','history','security'].map(tab => `<button class="tab-btn ${this.activeTab === tab ? 'active' : ''}" onclick="adminView.setTab('${tab}')">
+            ${['classes','history','security'].map(tab => `<button class="tab-btn ${this.activeTab === tab ? 'active' : ''}" onclick="adminView.setTab('${tab}')">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">${this.getTabIcon(tab)}</svg>
             <span>${this.getTabLabel(tab)}</span></button>`).join('')}</div>${this.renderTabContent()}</div>`;
     },
     getTabIcon(tab) {
         const icons = { classes: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path>',
-            reports: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>',
             history: '<circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6m5.2-14.2L13.4 8.6m-2.8 2.8-3.8 3.8M23 12h-6m-6 0H1m14.2 5.2-3.8-3.8m-2.8-2.8-3.8-3.8"></path>',
             security: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>' };
         return icons[tab] || '';
     },
     getTabLabel(tab) {
-        const labels = { classes: 'Класи', reports: 'Звіти', history: 'Архів', security: 'Безпека' };
+        const labels = { classes: 'Класи', history: 'Архів', security: 'Безпека' };
         return labels[tab] || '';
     },
     renderTabContent() {
         switch (this.activeTab) {
             case 'classes': return this.renderClasses();
-            case 'reports': return this.renderReports();
             case 'history': return this.renderHistory();
             case 'security': return this.renderSecurity();
             default: return '';
@@ -864,16 +865,13 @@ const adminView = {
             <button class="icon-btn delete" onclick="adminView.deleteClass('${c.id}')">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div></div>`).join('')}</div></div></div>`;
     },
-    renderReports() {
-        return canteenView.render().replace('canteenView', 'adminView');
-    },
     renderHistory() {
         const allReports = [...state.reports, ...state.history];
         return `<div class="history-container"><h3>Архів записів (${allReports.length})</h3><div class="history-list">
             ${allReports.slice(-20).reverse().map(h => {
                 const cls = state.classes.find(c => c.id === h.classId);
                 return `<div class="history-item"><div>${h.date} — <span class="class">${cls?.className || 'Видалений'}</span></div>
-                <div>${h.eatingStudents + (h.teacherEating ? 1 : 0)} харч.</div></div>`;
+                <div>${h.eatingStudents + (h.teacherEating ? 1 : 0) + (h.assistantEating ? 1 : 0)} харч.</div></div>`;
             }).join('')}</div></div>`;
     },
     renderSecurity() {
@@ -978,7 +976,6 @@ const adminView = {
         app.render();
     },
     attachEvents() {
-        if (this.activeTab === 'reports') canteenView.attachEvents();
     }
 };
 
