@@ -610,7 +610,7 @@ const canteenView = {
             const report = reports.find(r => r.classId === c.id);
             const eatingCount = (report?.eatingStudents || 0) + (report?.teacherEating ? 1 : 0) + (report?.assistantEating ? 1 : 0);
             return `<div class="class-card ${report ? 'submitted' : 'pending'}"><div class="class-card-header"><h4>${c.className}</h4><span>${c.teacherName}</span></div>
-            ${report ? `<div class="eating-count"><p>Харчуються</p><p class="count">${eatingCount}</p>${report.teacherEating ? '<p class="teacher-badge">+ Вчитель</p>' : ''}</div>
+            ${report ? `<div class="eating-count"><p>Харчуються</p><p class="count">${eatingCount}</p>${report.teacherEating ? '<p class="teacher-badge">+ Вчитель</p>' : ''}${report.assistantEating ? '<p class="teacher-badge">+ Асистент</p>' : ''}</div>
             <div class="class-card-footer"><div><svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> ${new Date(report.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
             <div>${report.actualStudents} / ${report.totalStudents} учнів</div></div>` : '<div class="no-report">Немає заявки</div>'}</div>`;
         }).join('')}</div>`;
